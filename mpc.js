@@ -5,15 +5,13 @@ module.exports.MPC = MPC = function(host, port) {
     socket.once("hello", function(data) {
 	console.log("Connected");
     });
-    switch (process.argv[2]) {
-    case "add":
-	socket.emit("add", {files:["sample.mp3", "sample.mp3"]});
-	break;
-    default:
-	socket.emit(process.argv[2]);
-	break;
-    } 
-//    socket.disconnect();
+    socket.emit("add", {files:["music/sample.mp3", "music/sample.mp3"]});
+    socket.on("addfinished", function() {
+	socket.emit("play");
+	setTimeout(function() {
+	    socket.emit("pause");
+	}, 5000);
+    });
 }
 if(require.main === module) {
     var mpc = new MPC("localhost", 6600);

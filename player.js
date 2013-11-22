@@ -25,19 +25,25 @@ util.inherits(Player, EventEmitter);
 Player.prototype.pause = function() {
     this.state.player = PAUSED;
     this.emit("paused");
+    this.emit("statechange", PAUSED);
 }
 Player.prototype.play  = function(filename) {
     if (filename) {
 	var self = this;
+	this.state.player = PLAYING;
+	this.emit("statechange", PLAYING);
 	this.fileStream = fs.createReadStream(filename);
 	this.fileStream.on("data", function(chunk) {
 	    if (!self.state.player == PAUSED) {
+//		console.log("Writing to decoder", self.state.player);
 		var ready = self.decoder.write(chunk);
 		if (!ready) {
-		    self.pause();
-		    self.decoder.once("drain", self.resume.bind(self));
+		    self.fileStream.pause();
+		    self.decoder.once("drain", self.fileStream.resume.bind(self));
 		}
-	    } 
+	    } else {
+		self.fileStream.pause();
+	    }
 	});
 	this.fileStream.on("end", function() {
 	    self.decoder.end();
@@ -49,11 +55,14 @@ Player.prototype.play  = function(filename) {
 	this.decoder.on("data", function(chunk) {
 	    if (self.speaker != null) {
 		if (!self.state.player == PAUSED) {
+//		    console.log("Writing to speaker");
 		    var ready = self.speaker.write(chunk);
 		    if (!ready) {
-			self.pause();
-			self.speaker.once("drain", self.resume.bind(self));
+			self.decoder.pause();
+			self.speaker.once("drain", self.decoder.resume.bind(self));
 		    }
+		} else {
+		    self.decoder.pause();
 		}
 	    }
 	});
@@ -65,6 +74,8 @@ Player.prototype.play  = function(filename) {
 	    }
 	    self.emit("songend");
 	});
+	this.fileStream.resume();
+	this.decoder.resume();
     } else {
 	if (this.state.player == PAUSED && this.fileStream != null) {
 	    this.fileStream.resume();
@@ -92,6 +103,8 @@ Player.prototype.stop = function() {
     } catch (e) {
 	console.log(e);
     }
+    this.emit("statechange", STOPPED);
+    this.state = STOPPED;
     this.emit("stopped");
 }
 Player.prototype.close = function() {
@@ -111,5 +124,6 @@ if (require.main == module) {
     }, 3000);
     setTimeout(function() {
 	player.play();
-    }, 5000);
+    }, 7000);
+
 }
