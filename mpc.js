@@ -5,7 +5,7 @@ module.exports.MPC = MPC = function(host, port) {
     socket.once("hello", function(data) {
 	console.log("Connected");
     });
-    socket.emit("add", {files:["music/sample.mp3", "music/sample.mp3"]});
+    socket.emit("add", {files:["/nfs/nfs4/home/mifitzge/dev/mpdjs/music/JEFF the Brotherhood - Castle Storm [Album] [eb51111b-6f64-419e-8bbc-01e55c5f43d3]/13. Hot Gloo.mp3"]});
     socket.on("addfinished", function() {
 	socket.emit("play");
 	setTimeout(function() {
